@@ -1,0 +1,57 @@
+###################################################################
+# Sistem Gudang MID — .gitignore
+# Laravel 12 + Tailwind CSS + MySQL
+###################################################################
+
+# ── Environment ──────────────────────────────────────────────────
+.env
+.env.backup
+.env.production
+.env.*.local
+
+# ── Dependencies ─────────────────────────────────────────────────
+/vendor
+/node_modules
+
+# ── Build / Compiled Assets ──────────────────────────────────────
+/public/build
+/public/hot
+/public/storage
+npm-debug.log
+yarn-error.log
+
+# ── Storage & Cache ──────────────────────────────────────────────
+/storage/*.key
+/storage/pail
+/bootstrap/cache/*.php
+!bootstrap/cache/.gitignore
+
+# ── Database (SQLite fallback) ───────────────────────────────────
+/database/*.sqlite
+/database/*.sqlite-journal
+
+# ── IDE / Editor ─────────────────────────────────────────────────
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+*.sublime-project
+*.sublime-workspace
+
+# ── Testing ──────────────────────────────────────────────────────
+.phpactor.json
+.phpunit.result.cache
+/.phpunit.cache
+
+# ── OS Generated ─────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+
+# ── Homestead / Vagrant ─────────────────────────────────────────
+Homestead.json
+Homestead.yaml
+
+# ── Auth ─────────────────────────────────────────────────────────
+/auth.json
