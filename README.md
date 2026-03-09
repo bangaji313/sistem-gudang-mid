@@ -27,7 +27,7 @@
 - [Fitur Unggulan: ChatOps Telegram Bot](#-fitur-unggulan-chatops-telegram-bot)
 - [Tech Stack](#-tech-stack)
 - [Arsitektur & Struktur Proyek](#-arsitektur--struktur-proyek)
-- [Sistem Role & Hak Akses](#-sistem-role--hak-akses)
+- [Alur Operasional & Hak Akses](#-alur-operasional--hak-akses)
 - [Instalasi & Setup](#-instalasi--setup)
 - [Konfigurasi Telegram Bot](#-konfigurasi-telegram-bot)
 - [Perintah Artisan Kustom](#-perintah-artisan-kustom)
@@ -155,6 +155,14 @@ Sistem ini memiliki fitur unggulan berupa **integrasi penuh dengan Telegram Bot*
 
 ## 📁 Arsitektur & Struktur Proyek
 
+### Diagram Arsitektur Teknis
+
+![Arsitektur Teknis Sistem](public/images/Fixed_Arsitektur_Teknis_Sistem_Manajemen_Gudang.png)
+
+Arsitektur sistem memisahkan dua jalur interaksi utama: **Web Browser** (untuk akses dashboard, CRUD, dan laporan) dan **Telegram Bot** (untuk ChatOps operasional lapangan). Kedua jalur bermuara pada **Laravel Controller** sebagai pusat logika bisnis. Integrasi Telegram menggunakan mekanisme **Webhook** yang di-_expose_ ke internet melalui **Ngrok** pada saat development. Seluruh data tersimpan di database **MySQL 8.0** dan perubahan stok dikelola secara otomatis melalui **Observer Pattern** (`TransactionObserver` dan `PurchaseOrderDetailObserver`) sehingga konsistensi data terjaga tanpa intervensi manual.
+
+### Struktur Direktori
+
 ```
 sistem-gudang-mid/
 ├── app/
@@ -210,7 +218,15 @@ sistem-gudang-mid/
 
 ---
 
-## 🔐 Sistem Role & Hak Akses
+## � Alur Operasional & Hak Akses
+
+### Diagram Alur Kerja Operasional
+
+![Alur Operasional & Hak Akses](public/images/Fixed_Arsitektur_Non-Teknis_Sistem_Manajemen_Gudang.png)
+
+Siklus operasional gudang berjalan secara linear: dimulai dari pengelolaan **Master Data** (Vendor, Divisi, Satuan, Barang), dilanjutkan pembuatan **Purchase Order**, pencatatan **Barang Masuk** ke gudang, pemantauan **Stok Real-time**, hingga pencatatan **Barang Keluar** untuk kebutuhan operasional. Setiap tahapan dijaga oleh sistem hak akses berbasis role sehingga masing-masing personel hanya dapat mengakses fitur sesuai tanggung jawabnya. Sebagai pelengkap, sistem dilengkapi **ChatOps Bot Telegram** yang memfasilitasi 3 fase operasional — **Autentikasi** (login/logout via chat), **Read Data** (cek stok & PO secara instan), dan **Input Transaksi** (wizard pencatatan barang masuk/keluar langsung dari Telegram) — memungkinkan tim lapangan bekerja cepat tanpa harus membuka browser.
+
+### Matriks Hak Akses per Role
 
 | Fitur | Super Admin | Admin | Purchase | Gudang |
 |-------|:-----------:|:-----:|:--------:|:------:|
