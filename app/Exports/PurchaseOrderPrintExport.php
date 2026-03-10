@@ -60,7 +60,8 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings
                     ->setPaperSize(PageSetup::PAPERSIZE_STATEMENT)
                     ->setFitToWidth(0)
                     ->setFitToHeight(0)
-                    ->setScale(100);
+                    ->setScale(100)
+                    ->setHorizontalCentered(true);
 
                 $sheet->getPageMargins()
                     ->setTop(0.3)
@@ -170,11 +171,12 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings
                     $sheet->setCellValue("{$col}{$headerRow}", $label);
                 }
 
-                // Style header: bold, center, wrap text
+                // Style header: bold, center (H+V), wrap text
                 $headerRange = "A{$headerRow}:H{$headerRow}";
                 $sheet->getStyle($headerRange)->getFont()->setBold(true)->setSize(9);
                 $sheet->getStyle($headerRange)->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+                    ->setVertical(Alignment::VERTICAL_CENTER)
                     ->setWrapText(true);
 
                 // Border DASHED hanya ATAS dan BAWAH header
@@ -234,6 +236,11 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings
                 $sheet->getStyle("H{$dataRow}")->getNumberFormat()
                     ->setFormatCode('#,##0');
                 $sheet->getStyle("H{$dataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+                // Vertical-center seluruh baris data + wrap text No Invoice
+                $sheet->getStyle("A{$dataRow}:H{$dataRow}")->getAlignment()
+                    ->setVertical(Alignment::VERTICAL_CENTER);
+                $sheet->getStyle("D{$dataRow}")->getAlignment()->setWrapText(true);
 
                 // ═══ TIDAK ADA border di bawah baris data ═══
 
