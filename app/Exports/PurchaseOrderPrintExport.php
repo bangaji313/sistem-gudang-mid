@@ -70,15 +70,15 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings
                     ->setLeft(0.3);
 
                 // ─────────────────────────────────────────────
-                // LEBAR KOLOM — diet agar total ≤ 90 (skala 100%)
+                // LEBAR KOLOM — lega proporsional (total = 97)
                 // ─────────────────────────────────────────────
                 $sheet->getColumnDimension('A')->setWidth(4)->setAutoSize(false);   // No
-                $sheet->getColumnDimension('B')->setWidth(11)->setAutoSize(false);  // Tgl PO
-                $sheet->getColumnDimension('C')->setWidth(11)->setAutoSize(false);  // Tgl Delivery
-                $sheet->getColumnDimension('D')->setWidth(16)->setAutoSize(false);  // No Invoice
-                $sheet->getColumnDimension('E')->setWidth(11)->setAutoSize(false);  // Tgl Invoice
-                $sheet->getColumnDimension('F')->setWidth(11)->setAutoSize(false);  // Tgl Diterima
-                $sheet->getColumnDimension('G')->setWidth(11)->setAutoSize(false);  // Tgl Tempo Pembayaran
+                $sheet->getColumnDimension('B')->setWidth(12)->setAutoSize(false);  // Tgl PO
+                $sheet->getColumnDimension('C')->setWidth(12)->setAutoSize(false);  // Tgl Delivery
+                $sheet->getColumnDimension('D')->setWidth(18)->setAutoSize(false);  // No Invoice
+                $sheet->getColumnDimension('E')->setWidth(12)->setAutoSize(false);  // Tgl Invoice
+                $sheet->getColumnDimension('F')->setWidth(12)->setAutoSize(false);  // Tgl Diterima
+                $sheet->getColumnDimension('G')->setWidth(13)->setAutoSize(false);  // Tgl Tempo Pembayaran
                 $sheet->getColumnDimension('H')->setWidth(14)->setAutoSize(false);  // Total Harga
 
                 // ─────────────────────────────────────────────
@@ -92,12 +92,12 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings
                 $sheet->mergeCells('D2:H2');
                 $sheet->setCellValue('D2', 'Jl. Telekomunikasi No.1 Kec. Bojongsoang Kab. Bandung');
                 $sheet->getStyle('D2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-                $sheet->getStyle('D2')->getFont()->setSize(9);
+                $sheet->getStyle('D2')->getFont()->setSize(11);
 
                 $sheet->mergeCells('D3:H3');
                 $sheet->setCellValue('D3', '08131438939 / adm@multyarthaindodaya.com');
                 $sheet->getStyle('D3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-                $sheet->getStyle('D3')->getFont()->setSize(9);
+                $sheet->getStyle('D3')->getFont()->setSize(11);
 
                 // Garis pemisah bawah kop
                 $sheet->getStyle('A4:H4')->getBorders()->getBottom()
@@ -171,9 +171,9 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings
                     $sheet->setCellValue("{$col}{$headerRow}", $label);
                 }
 
-                // Style header: bold, center (H+V), wrap text
+                // Style header: bold, center (H+V), wrap text, font 11
                 $headerRange = "A{$headerRow}:H{$headerRow}";
-                $sheet->getStyle($headerRange)->getFont()->setBold(true)->setSize(9);
+                $sheet->getStyle($headerRange)->getFont()->setBold(true)->setSize(11);
                 $sheet->getStyle($headerRange)->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER)
@@ -235,12 +235,18 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings
                 $sheet->setCellValue("H{$dataRow}", $po->grand_total);
                 $sheet->getStyle("H{$dataRow}")->getNumberFormat()
                     ->setFormatCode('#,##0');
-                $sheet->getStyle("H{$dataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
-                // Vertical-center seluruh baris data + wrap text No Invoice
-                $sheet->getStyle("A{$dataRow}:H{$dataRow}")->getAlignment()
+                // Styling baris data: font 11, center H+V, row height 35
+                $dataRange = "A{$dataRow}:H{$dataRow}";
+                $sheet->getStyle($dataRange)->getFont()->setSize(11);
+                $sheet->getStyle($dataRange)->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
                 $sheet->getStyle("D{$dataRow}")->getAlignment()->setWrapText(true);
+                $sheet->getRowDimension($dataRow)->setRowHeight(35);
+
+                // Kolom H tetap rata kanan (override setelah styling massal)
+                $sheet->getStyle("H{$dataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
                 // ═══ TIDAK ADA border di bawah baris data ═══
 
