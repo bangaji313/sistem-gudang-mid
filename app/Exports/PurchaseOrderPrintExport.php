@@ -5,7 +5,6 @@ namespace App\Exports;
 use App\Helpers\Terbilang;
 use App\Models\PurchaseOrder;
 use Carbon\Carbon;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithDrawings;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
@@ -14,7 +13,7 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 
-class PurchaseOrderPrintExport implements WithEvents, WithDrawings, ShouldAutoSize
+class PurchaseOrderPrintExport implements WithEvents, WithDrawings
 {
     private PurchaseOrder $po;
 
@@ -68,15 +67,17 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings, ShouldAutoSi
                     ->setBottom(0.3)
                     ->setLeft(0.3);
 
-                // Lebar kolom — 8 kolom A-H untuk Kontra Bon
-                $sheet->getColumnDimension('A')->setWidth(5);    // No
-                $sheet->getColumnDimension('B')->setWidth(14);   // Tgl PO
-                $sheet->getColumnDimension('C')->setWidth(14);   // Tgl Delivery
-                $sheet->getColumnDimension('D')->setWidth(16);   // No Invoice
-                $sheet->getColumnDimension('E')->setWidth(14);   // Tgl Invoice
-                $sheet->getColumnDimension('F')->setWidth(14);   // Tgl Diterima
-                $sheet->getColumnDimension('G')->setWidth(18);   // Tgl Tempo Pembayaran
-                $sheet->getColumnDimension('H')->setWidth(18);   // Total Harga
+                // ─────────────────────────────────────────────
+                // LEBAR KOLOM — presisi sesuai spesifikasi
+                // ─────────────────────────────────────────────
+                $sheet->getColumnDimension('A')->setWidth(5)->setAutoSize(false);   // No
+                $sheet->getColumnDimension('B')->setWidth(15)->setAutoSize(false);  // Tgl PO
+                $sheet->getColumnDimension('C')->setWidth(15)->setAutoSize(false);  // Tgl Delivery
+                $sheet->getColumnDimension('D')->setWidth(25)->setAutoSize(false);  // No Invoice
+                $sheet->getColumnDimension('E')->setWidth(15)->setAutoSize(false);  // Tgl Invoice
+                $sheet->getColumnDimension('F')->setWidth(15)->setAutoSize(false);  // Tgl Diterima
+                $sheet->getColumnDimension('G')->setWidth(25)->setAutoSize(false);  // Tgl Tempo Pembayaran
+                $sheet->getColumnDimension('H')->setWidth(20)->setAutoSize(false);  // Total Harga
 
                 // ─────────────────────────────────────────────
                 // KOP SURAT — Baris 1-3 (rata kanan kolom D-H)
@@ -103,18 +104,21 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings, ShouldAutoSi
                 // ─────────────────────────────────────────────
                 // META INFO (Kiri Baris 5-7) + JUDUL (Kanan Baris 5)
                 // ─────────────────────────────────────────────
-                $sheet->setCellValue('A5', 'No. PO');
+                $sheet->setCellValue('A5', 'No. Kontra Bon');
                 $sheet->mergeCells('B5:C5');
                 $sheet->setCellValue('B5', ':  ' . $po->nomor_po);
                 $sheet->getStyle('B5')->getFont()->setBold(true);
 
                 $sheet->setCellValue('A6', 'Tanggal');
                 $sheet->mergeCells('B6:C6');
-                $sheet->setCellValue('B6', ':  ' . Carbon::parse($po->tanggal_po)->format('d/m/Y'));
+                $tglKontraBon = $po->tgl_kontra_bon
+                    ? Carbon::parse($po->tgl_kontra_bon)->format('d/m/Y')
+                    : '-';
+                $sheet->setCellValue('B6', ':  ' . $tglKontraBon);
 
-                $sheet->setCellValue('A7', 'Tipe / Status');
+                $sheet->setCellValue('A7', 'Proyek');
                 $sheet->mergeCells('B7:C7');
-                $sheet->setCellValue('B7', ':  ' . $po->tipe_po . ' / ' . $po->status_pesanan);
+                $sheet->setCellValue('B7', ':  ' . ($po->proyek ?? '-'));
 
                 // Judul rata kanan
                 $sheet->mergeCells('F5:H5');
@@ -133,8 +137,9 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings, ShouldAutoSi
                 $sheet->setCellValue('B10', ':  ' . $po->vendor->nama_vendor);
 
                 $sheet->setCellValue('A11', 'Alamat Vendor');
-                $sheet->mergeCells('B11:D11');
+                $sheet->mergeCells('B11:H11');
                 $sheet->setCellValue('B11', ':  ' . ($po->vendor->alamat ?? ($po->vendor->kontak ?? '-')));
+                $sheet->getStyle('B11')->getAlignment()->setWrapText(true);
 
                 // ─────────────────────────────────────────────
                 // TABEL HEADER (Baris 13) — 8 kolom Kontra Bon
@@ -155,19 +160,21 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings, ShouldAutoSi
                     $sheet->setCellValue("{$col}{$headerRow}", $label);
                 }
 
-                // Style header: bold, center, border dashed atas-bawah
+                // Style header: bold, center, wrap text
                 $headerRange = "A{$headerRow}:H{$headerRow}";
                 $sheet->getStyle($headerRange)->getFont()->setBold(true)->setSize(9);
                 $sheet->getStyle($headerRange)->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setWrapText(true);
+
+                // Border DASHED hanya ATAS dan BAWAH header
                 $sheet->getStyle($headerRange)->getBorders()->getTop()
                     ->setBorderStyle(Border::BORDER_DASHED);
                 $sheet->getStyle($headerRange)->getBorders()->getBottom()
                     ->setBorderStyle(Border::BORDER_DASHED);
 
                 // ─────────────────────────────────────────────
-                // DATA — 1 baris rangkuman PO (bukan loop details)
+                // DATA — 1 baris rangkuman PO (TANPA border)
                 // ─────────────────────────────────────────────
                 $dataRow = $headerRow + 1;
 
@@ -179,9 +186,9 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings, ShouldAutoSi
                 $sheet->setCellValue("B{$dataRow}", Carbon::parse($po->tanggal_po)->format('d/m/Y'));
                 $sheet->getStyle("B{$dataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // C: Tgl Delivery — hanya tampil jika Pre-Order & estimasi_sampai terisi
-                $tglDelivery = ($po->tipe_po === 'Pre-Order' && $po->estimasi_sampai)
-                    ? Carbon::parse($po->estimasi_sampai)->format('d/m/Y')
+                // C: Tgl Delivery
+                $tglDelivery = $po->tgl_delivery
+                    ? Carbon::parse($po->tgl_delivery)->format('d/m/Y')
                     : '-';
                 $sheet->setCellValue("C{$dataRow}", $tglDelivery);
                 $sheet->getStyle("C{$dataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
@@ -218,9 +225,7 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings, ShouldAutoSi
                     ->setFormatCode('#,##0');
                 $sheet->getStyle("H{$dataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
-                // Garis dashed di bawah data
-                $sheet->getStyle("A{$dataRow}:H{$dataRow}")->getBorders()->getBottom()
-                    ->setBorderStyle(Border::BORDER_DASHED);
+                // ═══ TIDAK ADA border di bawah baris data ═══
 
                 // ─────────────────────────────────────────────
                 // TOTAL, DISKON, GRAND TOTAL (polos, tanpa border)

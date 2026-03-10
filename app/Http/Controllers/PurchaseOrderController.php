@@ -52,8 +52,9 @@ class PurchaseOrderController extends Controller
         $vendors = Vendor::orderBy('nama_vendor')->get();
         $items   = Item::with('uom')->orderBy('nama_barang')->get();
         $uoms    = Uom::orderBy('nama_satuan')->get();
+        $proyeks = PurchaseOrder::whereNotNull('proyek')->where('proyek', '!=', '')->distinct()->pluck('proyek');
 
-        return view('purchase_orders.create', compact('vendors', 'items', 'uoms'));
+        return view('purchase_orders.create', compact('vendors', 'items', 'uoms', 'proyeks'));
     }
 
     /**
@@ -62,7 +63,7 @@ class PurchaseOrderController extends Controller
     public function store(Request $request): RedirectResponse
     {
         // ── Konversi tanggal DD/MM/YYYY (Flatpickr) → Y-m-d (MySQL) ──
-        $dateFields = ['tanggal_po', 'estimasi_sampai', 'tanggal_jatuh_tempo', 'tgl_invoice', 'tgl_diterima'];
+        $dateFields = ['tanggal_po', 'estimasi_sampai', 'tanggal_jatuh_tempo', 'tgl_invoice', 'tgl_diterima', 'tgl_kontra_bon', 'tgl_delivery'];
         foreach ($dateFields as $field) {
             if ($request->filled($field)) {
                 try {
@@ -80,6 +81,9 @@ class PurchaseOrderController extends Controller
             'no_invoice'           => ['nullable', 'string', 'max:255'],
             'tgl_invoice'          => ['nullable', 'date'],
             'tgl_diterima'         => ['nullable', 'date'],
+            'proyek'               => ['nullable', 'string', 'max:255'],
+            'tgl_kontra_bon'       => ['nullable', 'date'],
+            'tgl_delivery'         => ['nullable', 'date'],
             'nama_vendor'          => ['required', 'string', 'max:255'],
             'tanggal_po'           => ['required', 'date'],
             'tipe_po'              => ['required', 'in:Ready Stock,Pre-Order'],
@@ -151,6 +155,9 @@ class PurchaseOrderController extends Controller
                 'no_invoice'          => $request->no_invoice,
                 'tgl_invoice'         => $request->tgl_invoice,
                 'tgl_diterima'        => $request->tgl_diterima,
+                'proyek'              => $request->proyek,
+                'tgl_kontra_bon'      => $request->tgl_kontra_bon,
+                'tgl_delivery'        => $request->tgl_delivery,
                 'vendor_id'           => $vendor->id,
                 'tanggal_po'          => $request->tanggal_po,
                 'tipe_po'             => $request->tipe_po,
@@ -313,7 +320,7 @@ class PurchaseOrderController extends Controller
     public function updateDates(Request $request, PurchaseOrder $purchaseOrder): RedirectResponse
     {
         // Konversi tanggal DD/MM/YYYY (Flatpickr) → Y-m-d (MySQL)
-        $dateFields = ['tanggal_po', 'estimasi_sampai', 'tgl_invoice', 'tgl_diterima', 'tanggal_jatuh_tempo'];
+        $dateFields = ['tanggal_po', 'estimasi_sampai', 'tgl_invoice', 'tgl_diterima', 'tanggal_jatuh_tempo', 'tgl_kontra_bon', 'tgl_delivery'];
         foreach ($dateFields as $field) {
             if ($request->filled($field)) {
                 try {
@@ -332,6 +339,9 @@ class PurchaseOrderController extends Controller
             'tgl_invoice'         => ['nullable', 'date'],
             'tgl_diterima'        => ['nullable', 'date'],
             'tanggal_jatuh_tempo' => ['nullable', 'date'],
+            'tgl_kontra_bon'      => ['nullable', 'date'],
+            'tgl_delivery'        => ['nullable', 'date'],
+            'proyek'              => ['nullable', 'string', 'max:255'],
         ]);
 
         $purchaseOrder->update([
@@ -340,6 +350,9 @@ class PurchaseOrderController extends Controller
             'tgl_invoice'         => $request->tgl_invoice,
             'tgl_diterima'        => $request->tgl_diterima,
             'tanggal_jatuh_tempo' => $request->tanggal_jatuh_tempo,
+            'tgl_kontra_bon'      => $request->tgl_kontra_bon,
+            'tgl_delivery'        => $request->tgl_delivery,
+            'proyek'              => $request->proyek,
         ]);
 
         return back()->with('success', "Tanggal PO [{$purchaseOrder->nomor_po}] berhasil diperbarui.");

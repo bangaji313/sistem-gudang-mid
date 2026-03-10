@@ -140,6 +140,38 @@
                     @error('tgl_diterima') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
+                {{-- Proyek (Autocomplete via datalist) --}}
+                <div>
+                    <label for="proyek" class="block text-sm font-medium text-gray-700 mb-1.5">Proyek</label>
+                    <input type="text" id="proyek" name="proyek" value="{{ old('proyek') }}" list="proyek-list"
+                           placeholder="Ketik atau pilih nama proyek (opsional)"
+                           class="block w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+                    <datalist id="proyek-list">
+                        @foreach ($proyeks as $p)
+                            <option value="{{ $p }}">
+                        @endforeach
+                    </datalist>
+                    @error('proyek') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                {{-- Tgl Kontra Bon --}}
+                <div>
+                    <label for="tgl_kontra_bon" class="block text-sm font-medium text-gray-700 mb-1.5">Tgl Kontra Bon</label>
+                    <input type="text" id="tgl_kontra_bon" name="tgl_kontra_bon" value="{{ old('tgl_kontra_bon') }}" readonly
+                           placeholder="dd/mm/yyyy"
+                           class="flatpickr-date block w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+                    @error('tgl_kontra_bon') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                {{-- Tgl Delivery --}}
+                <div>
+                    <label for="tgl_delivery" class="block text-sm font-medium text-gray-700 mb-1.5">Tgl Delivery</label>
+                    <input type="text" id="tgl_delivery" name="tgl_delivery" value="{{ old('tgl_delivery') }}" readonly
+                           placeholder="dd/mm/yyyy"
+                           class="flatpickr-date block w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+                    @error('tgl_delivery') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
                 {{-- Tanggal PO --}}
                 <div>
                     <label for="tanggal_po" class="block text-sm font-medium text-gray-700 mb-1.5">Tanggal PO <span class="text-red-500">*</span></label>

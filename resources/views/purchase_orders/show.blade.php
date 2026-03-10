@@ -103,6 +103,24 @@
                     <span class="text-xs text-gray-400">Tanggal PO</span>
                     <p class="font-semibold text-gray-900">{{ \Carbon\Carbon::parse($purchaseOrder->tanggal_po)->format('d M Y') }}</p>
                 </div>
+                @if ($purchaseOrder->proyek)
+                    <div>
+                        <span class="text-xs text-gray-400">Proyek</span>
+                        <p class="font-semibold text-gray-900">{{ $purchaseOrder->proyek }}</p>
+                    </div>
+                @endif
+                @if ($purchaseOrder->tgl_kontra_bon)
+                    <div>
+                        <span class="text-xs text-gray-400">Tgl Kontra Bon</span>
+                        <p class="font-semibold text-gray-900">{{ $purchaseOrder->tgl_kontra_bon->format('d M Y') }}</p>
+                    </div>
+                @endif
+                @if ($purchaseOrder->tgl_delivery)
+                    <div>
+                        <span class="text-xs text-gray-400">Tgl Delivery</span>
+                        <p class="font-semibold text-gray-900">{{ $purchaseOrder->tgl_delivery->format('d M Y') }}</p>
+                    </div>
+                @endif
                 @if ($purchaseOrder->no_invoice)
                     <div>
                         <span class="text-xs text-gray-400">No. Invoice</span>
@@ -331,12 +349,37 @@
                 @method('PUT')
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {{-- Proyek --}}
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Proyek</label>
+                        <input type="text" name="proyek"
+                               value="{{ $purchaseOrder->proyek ?? '' }}"
+                               placeholder="Ketik nama proyek (opsional)"
+                               class="block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
+                    </div>
+
+                    {{-- Tgl Kontra Bon --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tgl Kontra Bon</label>
+                        <input type="text" name="tgl_kontra_bon" readonly
+                               value="{{ $purchaseOrder->tgl_kontra_bon ? $purchaseOrder->tgl_kontra_bon->format('d/m/Y') : '' }}"
+                               class="modal-datepicker block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
+                    </div>
+
                     {{-- Tanggal PO --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal PO <span class="text-red-500">*</span></label>
                         <input type="text" name="tanggal_po" readonly
                                value="{{ $purchaseOrder->tanggal_po ? $purchaseOrder->tanggal_po->format('d/m/Y') : '' }}"
                                class="modal-datepicker block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" required />
+                    </div>
+
+                    {{-- Tgl Delivery --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tgl Delivery</label>
+                        <input type="text" name="tgl_delivery" readonly
+                               value="{{ $purchaseOrder->tgl_delivery ? $purchaseOrder->tgl_delivery->format('d/m/Y') : '' }}"
+                               class="modal-datepicker block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
                     </div>
 
                     {{-- Estimasi Sampai --}}
