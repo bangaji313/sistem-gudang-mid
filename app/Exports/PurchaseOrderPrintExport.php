@@ -76,7 +76,7 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings
                 $sheet->getColumnDimension('D')->setWidth(25)->setAutoSize(false);  // No Invoice
                 $sheet->getColumnDimension('E')->setWidth(15)->setAutoSize(false);  // Tgl Invoice
                 $sheet->getColumnDimension('F')->setWidth(15)->setAutoSize(false);  // Tgl Diterima
-                $sheet->getColumnDimension('G')->setWidth(25)->setAutoSize(false);  // Tgl Tempo Pembayaran
+                $sheet->getColumnDimension('G')->setWidth(20)->setAutoSize(false);  // Tgl Tempo Pembayaran
                 $sheet->getColumnDimension('H')->setWidth(20)->setAutoSize(false);  // Total Harga
 
                 // ─────────────────────────────────────────────
@@ -103,43 +103,52 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings
 
                 // ─────────────────────────────────────────────
                 // META INFO (Kiri Baris 5-7) + JUDUL (Kanan Baris 5)
+                // Label merge A:B, Nilai merge C:F (atau C:H untuk Proyek)
                 // ─────────────────────────────────────────────
+                $sheet->mergeCells('A5:B5');
                 $sheet->setCellValue('A5', 'No. Kontra Bon');
-                $sheet->mergeCells('B5:C5');
-                $sheet->setCellValue('B5', ':  ' . $po->nomor_po);
-                $sheet->getStyle('B5')->getFont()->setBold(true);
+                $sheet->mergeCells('C5:F5');
+                $sheet->setCellValue('C5', ':  ' . $po->nomor_po);
+                $sheet->getStyle('C5')->getFont()->setBold(true);
 
+                $sheet->mergeCells('A6:B6');
                 $sheet->setCellValue('A6', 'Tanggal');
-                $sheet->mergeCells('B6:C6');
+                $sheet->mergeCells('C6:F6');
                 $tglKontraBon = $po->tgl_kontra_bon
                     ? Carbon::parse($po->tgl_kontra_bon)->format('d/m/Y')
                     : '-';
-                $sheet->setCellValue('B6', ':  ' . $tglKontraBon);
+                $sheet->setCellValue('C6', ':  ' . $tglKontraBon);
 
+                $sheet->mergeCells('A7:B7');
                 $sheet->setCellValue('A7', 'Proyek');
-                $sheet->mergeCells('B7:C7');
-                $sheet->setCellValue('B7', ':  ' . ($po->proyek ?? '-'));
+                $sheet->mergeCells('C7:H7');
+                $sheet->setCellValue('C7', ':  ' . ($po->proyek ?? '-'));
+                $sheet->getStyle('C7:H7')->getAlignment()->setWrapText(true);
 
                 // Judul rata kanan
-                $sheet->mergeCells('F5:H5');
-                $sheet->setCellValue('F5', 'KONTRA BON');
-                $sheet->getStyle('F5')->getFont()->setBold(true)->setSize(18);
-                $sheet->getStyle('F5')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $sheet->mergeCells('G5:H5');
+                $sheet->setCellValue('G5', 'KONTRA BON');
+                $sheet->getStyle('G5')->getFont()->setBold(true)->setSize(18);
+                $sheet->getStyle('G5')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
                 // ─────────────────────────────────────────────
                 // INFO VENDOR (Baris 9-11)
+                // Label merge A:B, Nilai merge C:H
                 // ─────────────────────────────────────────────
+                $sheet->mergeCells('A9:B9');
                 $sheet->setCellValue('A9', 'Kepada Yth,');
                 $sheet->getStyle('A9')->getFont()->setItalic(true);
 
+                $sheet->mergeCells('A10:B10');
                 $sheet->setCellValue('A10', 'Nama Vendor');
-                $sheet->mergeCells('B10:D10');
-                $sheet->setCellValue('B10', ':  ' . $po->vendor->nama_vendor);
+                $sheet->mergeCells('C10:H10');
+                $sheet->setCellValue('C10', ':  ' . $po->vendor->nama_vendor);
 
+                $sheet->mergeCells('A11:B11');
                 $sheet->setCellValue('A11', 'Alamat Vendor');
-                $sheet->mergeCells('B11:H11');
-                $sheet->setCellValue('B11', ':  ' . ($po->vendor->alamat ?? ($po->vendor->kontak ?? '-')));
-                $sheet->getStyle('B11')->getAlignment()->setWrapText(true);
+                $sheet->mergeCells('C11:H11');
+                $sheet->setCellValue('C11', ':  ' . ($po->vendor->alamat ?? ($po->vendor->kontak ?? '-')));
+                $sheet->getStyle('C11:H11')->getAlignment()->setWrapText(true);
 
                 // ─────────────────────────────────────────────
                 // TABEL HEADER (Baris 13) — 8 kolom Kontra Bon
