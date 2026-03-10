@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Helpers\Terbilang;
 use App\Models\Item;
 use App\Models\PurchaseOrder;
+use App\Models\PurchaseOrderDetail;
+use App\Models\PoDetailRevision;
 use App\Models\Uom;
 use App\Models\Vendor;
 use App\Exports\PurchaseOrderPrintExport;
@@ -285,7 +287,7 @@ class PurchaseOrderController extends Controller
      */
     public function show(PurchaseOrder $purchaseOrder): View
     {
-        $purchaseOrder->load(['vendor', 'user', 'details.item.uom']);
+        $purchaseOrder->load(['vendor', 'user', 'details.item.uom', 'details.revisions.revisedBy']);
 
         return view('purchase_orders.show', compact('purchaseOrder'));
     }
@@ -356,6 +358,71 @@ class PurchaseOrderController extends Controller
         ]);
 
         return back()->with('success', "Tanggal PO [{$purchaseOrder->nomor_po}] berhasil diperbarui.");
+    }
+
+    /**
+     * Revisi QTY / Harga Satuan pada detail PO, rekam audit trail, hitung ulang grand total.
+     */
+    public function reviseDetail(Request $request, PurchaseOrderDetail $detail): RedirectResponse
+    {
+        $request->validate([
+            'new_qty'          => ['required', 'integer', 'min:1'],
+            'new_harga_satuan' => ['required', 'numeric', 'min:0'],
+            'keterangan'       => ['nullable', 'string', 'max:500'],
+        ], [
+            'new_qty.required'          => 'QTY baru wajib diisi.',
+            'new_qty.min'               => 'QTY baru minimal 1.',
+            'new_harga_satuan.required' => 'Harga satuan baru wajib diisi.',
+            'new_harga_satuan.min'      => 'Harga satuan tidak boleh negatif.',
+        ]);
+
+        DB::transaction(function () use ($request, $detail) {
+            // 1. Simpan history (audit trail)
+            PoDetailRevision::create([
+                'purchase_order_detail_id' => $detail->id,
+                'old_qty'                  => $detail->qty,
+                'new_qty'                  => $request->new_qty,
+                'old_price'                => $detail->harga_satuan,
+                'new_price'                => $request->new_harga_satuan,
+                'keterangan'               => $request->keterangan,
+                'revised_by'               => auth()->id(),
+            ]);
+
+            // 2. Update detail: qty, harga_satuan, subtotal
+            $newSubtotal = $request->new_qty * $request->new_harga_satuan;
+            $detail->update([
+                'qty'          => $request->new_qty,
+                'harga_satuan' => $request->new_harga_satuan,
+                'subtotal'     => $newSubtotal,
+            ]);
+
+            // 3. Hitung ulang total_harga & grand_total PO
+            $po = $detail->purchaseOrder;
+            $totalHarga = $po->details()->sum('subtotal');
+            $grandTotal = max($totalHarga - $po->diskon, 0);
+
+            // Hitung ulang sisa pembayaran berdasarkan status
+            $sisaPembayaran = 0;
+            switch ($po->status_pembayaran) {
+                case 'Lunas':
+                    $sisaPembayaran = 0;
+                    break;
+                case 'DP':
+                    $sisaPembayaran = max($grandTotal - $po->nominal_dp, 0);
+                    break;
+                case 'Tempo':
+                    $sisaPembayaran = $grandTotal;
+                    break;
+            }
+
+            $po->update([
+                'total_harga'     => $totalHarga,
+                'grand_total'     => $grandTotal,
+                'sisa_pembayaran' => $sisaPembayaran,
+            ]);
+        });
+
+        return back()->with('success', "Detail barang [{$detail->item->nama_barang}] berhasil direvisi.");
     }
 
     /**

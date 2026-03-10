@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PurchaseOrderDetail extends Model
 {
@@ -50,5 +51,13 @@ class PurchaseOrderDetail extends Model
     public function item(): BelongsTo
     {
         return $this->belongsTo(Item::class);
+    }
+
+    /**
+     * Get the revision history for this detail line.
+     */
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(PoDetailRevision::class, 'purchase_order_detail_id');
     }
 }

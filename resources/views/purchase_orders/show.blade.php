@@ -233,6 +233,9 @@
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Qty</th>
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Harga Satuan</th>
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Subtotal</th>
+                        @if (in_array(auth()->user()->role, ['purchase', 'super_admin']) && $purchaseOrder->status_pesanan !== 'Dibatalkan')
+                            <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Aksi</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -249,12 +252,170 @@
                             <td class="px-6 py-4 text-right text-gray-900">{{ number_format($detail->qty, 0, ',', '.') }}</td>
                             <td class="px-6 py-4 text-right text-gray-600">Rp {{ number_format($detail->harga_satuan, 0, ',', '.') }}</td>
                             <td class="px-6 py-4 text-right font-semibold text-gray-900">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
+                            @if (in_array(auth()->user()->role, ['purchase', 'super_admin']) && $purchaseOrder->status_pesanan !== 'Dibatalkan')
+                                <td class="px-6 py-4 text-center">
+                                    <div class="inline-flex items-center gap-1">
+                                        {{-- Tombol Revisi --}}
+                                        <button type="button" onclick="document.getElementById('modalRevisi{{ $detail->id }}').classList.remove('hidden')"
+                                                class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-orange-700 bg-orange-50 border border-orange-200 rounded-md hover:bg-orange-100 transition"
+                                                title="Revisi QTY / Harga">
+                                            <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+                                            Revisi
+                                        </button>
+                                        {{-- Tombol History --}}
+                                        @if ($detail->revisions->count() > 0)
+                                        <button type="button" onclick="document.getElementById('modalHistory{{ $detail->id }}').classList.remove('hidden')"
+                                                class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 transition"
+                                                title="Riwayat Revisi">
+                                            <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                                            {{ $detail->revisions->count() }}
+                                        </button>
+                                        @endif
+                                    </div>
+                                </td>
+                            @endif
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
     </div>
+
+    {{-- ════════════════════════════════════════════════════════════ --}}
+    {{-- MODAL: Revisi Detail & History (per detail line)             --}}
+    {{-- ════════════════════════════════════════════════════════════ --}}
+    @if (in_array(auth()->user()->role, ['purchase', 'super_admin']) && $purchaseOrder->status_pesanan !== 'Dibatalkan')
+        @foreach ($purchaseOrder->details as $detail)
+            {{-- ─── Modal Revisi ─── --}}
+            <div id="modalRevisi{{ $detail->id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-orange-50">
+                        <h3 class="text-lg font-bold text-gray-900">⚠️ Revisi Detail Barang</h3>
+                        <button type="button" onclick="document.getElementById('modalRevisi{{ $detail->id }}').classList.add('hidden')"
+                                class="text-gray-400 hover:text-gray-600 transition">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <form method="POST" action="{{ route('purchase-orders.revise-detail', $detail) }}" class="revise-form px-6 py-5 space-y-4">
+                        @csrf
+                        @method('PUT')
+
+                        {{-- Info Barang --}}
+                        <div class="bg-gray-50 rounded-lg p-3 text-sm">
+                            <p class="font-semibold text-gray-900">{{ $detail->item->nama_barang }}</p>
+                            <p class="text-gray-500 text-xs mt-0.5">Kode: {{ $detail->item->kode_barang }} · Satuan: {{ $detail->item->uom->nama_satuan }}</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            {{-- QTY Saat Ini --}}
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">QTY Saat Ini</label>
+                                <p class="px-3 py-2 bg-gray-100 rounded-lg text-sm font-semibold text-gray-700">{{ number_format($detail->qty, 0, ',', '.') }}</p>
+                            </div>
+                            {{-- QTY Baru --}}
+                            <div>
+                                <label for="new_qty_{{ $detail->id }}" class="block text-xs font-medium text-gray-700 mb-1">QTY Baru <span class="text-red-500">*</span></label>
+                                <input type="number" id="new_qty_{{ $detail->id }}" name="new_qty" value="{{ $detail->qty }}" min="1" required
+                                       class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+                            </div>
+                            {{-- Harga Saat Ini --}}
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Harga Saat Ini</label>
+                                <p class="px-3 py-2 bg-gray-100 rounded-lg text-sm font-semibold text-gray-700">Rp {{ number_format($detail->harga_satuan, 0, ',', '.') }}</p>
+                            </div>
+                            {{-- Harga Baru --}}
+                            <div>
+                                <label for="new_harga_{{ $detail->id }}" class="block text-xs font-medium text-gray-700 mb-1">Harga Baru <span class="text-red-500">*</span></label>
+                                <input type="number" id="new_harga_{{ $detail->id }}" name="new_harga_satuan" value="{{ intval($detail->harga_satuan) }}" min="0" step="1" required
+                                       class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+                            </div>
+                        </div>
+
+                        {{-- Keterangan Revisi --}}
+                        <div>
+                            <label for="keterangan_{{ $detail->id }}" class="block text-xs font-medium text-gray-700 mb-1">Keterangan Revisi</label>
+                            <textarea id="keterangan_{{ $detail->id }}" name="keterangan" rows="2" placeholder="Alasan revisi, misal: Barang datang kurang 2 pcs..."
+                                      class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"></textarea>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-200">
+                            <button type="button" onclick="document.getElementById('modalRevisi{{ $detail->id }}').classList.add('hidden')"
+                                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                    class="px-5 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition shadow-sm">
+                                ✏️ Simpan Revisi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {{-- ─── Modal History ─── --}}
+            @if ($detail->revisions->count() > 0)
+            <div id="modalHistory{{ $detail->id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-indigo-50">
+                        <h3 class="text-lg font-bold text-gray-900">🕐 Riwayat Revisi — {{ $detail->item->nama_barang }}</h3>
+                        <button type="button" onclick="document.getElementById('modalHistory{{ $detail->id }}').classList.add('hidden')"
+                                class="text-gray-400 hover:text-gray-600 transition">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <div class="px-6 py-5 max-h-[60vh] overflow-y-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-50 border-b border-gray-200 sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">#</th>
+                                    <th class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Waktu</th>
+                                    <th class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Perubahan QTY</th>
+                                    <th class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Perubahan Harga</th>
+                                    <th class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Keterangan</th>
+                                    <th class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Oleh</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach ($detail->revisions->sortByDesc('created_at') as $rev)
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2.5 text-gray-500">{{ $loop->iteration }}</td>
+                                        <td class="px-3 py-2.5 text-gray-600 text-xs whitespace-nowrap">{{ $rev->created_at->format('d/m/Y H:i') }}</td>
+                                        <td class="px-3 py-2.5">
+                                            @if ($rev->old_qty != $rev->new_qty)
+                                                <span class="text-red-500 line-through">{{ $rev->old_qty }}</span>
+                                                <span class="text-gray-400 mx-1">→</span>
+                                                <span class="text-green-600 font-semibold">{{ $rev->new_qty }}</span>
+                                            @else
+                                                <span class="text-gray-400">{{ $rev->old_qty }} (tetap)</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-3 py-2.5">
+                                            @if ($rev->old_price != $rev->new_price)
+                                                <span class="text-red-500 line-through">{{ number_format($rev->old_price, 0, ',', '.') }}</span>
+                                                <span class="text-gray-400 mx-1">→</span>
+                                                <span class="text-green-600 font-semibold">{{ number_format($rev->new_price, 0, ',', '.') }}</span>
+                                            @else
+                                                <span class="text-gray-400">{{ number_format($rev->old_price, 0, ',', '.') }} (tetap)</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-3 py-2.5 text-gray-600 text-xs max-w-[150px] truncate" title="{{ $rev->keterangan }}">{{ $rev->keterangan ?? '-' }}</td>
+                                        <td class="px-3 py-2.5 text-gray-600 text-xs">{{ $rev->revisedBy->name ?? '-' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-6 py-3 border-t border-gray-200 flex justify-end">
+                        <button type="button" onclick="document.getElementById('modalHistory{{ $detail->id }}').classList.add('hidden')"
+                                class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+            @endif
+        @endforeach
+    @endif
 
     {{-- Summary --}}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 max-w-sm ml-auto">
@@ -453,6 +614,37 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     form.submit();
+                }
+            });
+        });
+
+        // ═══ SweetAlert2 konfirmasi Revisi Detail Barang ═══
+        document.querySelectorAll('.revise-form').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const f = this;
+                Swal.fire({
+                    title: 'Revisi Detail Barang?',
+                    text: 'Perubahan QTY / Harga akan tercatat di rekam jejak (audit trail). Lanjutkan?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#f97316',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Ya, Revisi!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        f.submit();
+                    }
+                });
+            });
+        });
+
+        // ═══ Tutup modal jika klik backdrop ═══
+        document.querySelectorAll('[id^="modalRevisi"], [id^="modalHistory"]').forEach(function(modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
                 }
             });
         });
