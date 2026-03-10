@@ -6,6 +6,9 @@
     {{-- Tom Select CDN --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.min.css">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
+    {{-- Flatpickr CDN --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
         .ts-wrapper.single .ts-control {
             background-color: rgb(249 250 251);
@@ -122,8 +125,9 @@
                 {{-- Tanggal PO --}}
                 <div>
                     <label for="tanggal_po" class="block text-sm font-medium text-gray-700 mb-1.5">Tanggal PO <span class="text-red-500">*</span></label>
-                    <input type="date" id="tanggal_po" name="tanggal_po" value="{{ old('tanggal_po', date('Y-m-d')) }}" required
-                           class="block w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+                    <input type="text" id="tanggal_po" name="tanggal_po" value="{{ old('tanggal_po', date('d/m/Y')) }}" required readonly
+                           placeholder="dd/mm/yyyy"
+                           class="flatpickr-date block w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
                     @error('tanggal_po') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
@@ -141,8 +145,9 @@
                 {{-- Estimasi Barang Sampai (hanya Pre-Order) --}}
                 <div id="estimasiWrapper" class="hidden">
                     <label for="estimasi_sampai" class="block text-sm font-medium text-gray-700 mb-1.5">Estimasi Barang Sampai</label>
-                    <input type="date" id="estimasi_sampai" name="estimasi_sampai" value="{{ old('estimasi_sampai') }}"
-                           class="block w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+                    <input type="text" id="estimasi_sampai" name="estimasi_sampai" value="{{ old('estimasi_sampai') }}" readonly
+                           placeholder="dd/mm/yyyy"
+                           class="flatpickr-date block w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
                     <span id="info_waktu_tunggu" class="text-xs text-blue-600 mt-1 block"></span>
                     @error('estimasi_sampai') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
@@ -162,8 +167,9 @@
                 {{-- Tanggal Jatuh Tempo --}}
                 <div>
                     <label for="tanggal_jatuh_tempo" class="block text-sm font-medium text-gray-700 mb-1.5">Tanggal Jatuh Tempo</label>
-                    <input type="date" id="tanggal_jatuh_tempo" name="tanggal_jatuh_tempo" value="{{ old('tanggal_jatuh_tempo') }}"
-                           class="block w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition disabled:opacity-50 disabled:cursor-not-allowed" />
+                    <input type="text" id="tanggal_jatuh_tempo" name="tanggal_jatuh_tempo" value="{{ old('tanggal_jatuh_tempo') }}" readonly
+                           placeholder="dd/mm/yyyy"
+                           class="flatpickr-date block w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition disabled:opacity-50 disabled:cursor-not-allowed" />
                     <span id="help_jatuh_tempo" class="text-xs text-red-500 hidden">Wajib diisi karena status DP atau Tempo.</span>
                     @error('tanggal_jatuh_tempo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
@@ -248,6 +254,12 @@
     </form>
 
     <script>
+        // ── Flatpickr — Tanggal DD/MM/YYYY ───────────────────────────
+        flatpickr(".flatpickr-date", {
+            dateFormat: "d/m/Y",
+            allowInput: true,
+        });
+
         // ── Tom Select — Vendor (creatable) ──────────────────────────
         const existingVendors = @json($vendors->pluck('nama_vendor'));
 
@@ -326,8 +338,13 @@
                 infoWaktuTunggu.textContent = '';
                 return;
             }
-            const tglPo = new Date(tanggalPoInput.value);
-            const tglEst = new Date(estimasiInput.value);
+            // Parse dd/mm/yyyy → Date object
+            function parseDMY(str) {
+                const parts = str.split('/');
+                return new Date(parts[2], parts[1] - 1, parts[0]);
+            }
+            const tglPo = parseDMY(tanggalPoInput.value);
+            const tglEst = parseDMY(estimasiInput.value);
             const selisih = Math.ceil((tglEst - tglPo) / (1000 * 60 * 60 * 24));
 
             if (selisih > 0) {

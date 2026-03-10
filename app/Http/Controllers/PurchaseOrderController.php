@@ -10,6 +10,7 @@ use App\Models\Vendor;
 use App\Exports\PurchaseOrderPrintExport;
 use App\Exports\PurchaseOrdersExport;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -60,6 +61,20 @@ class PurchaseOrderController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        // ── Konversi tanggal DD/MM/YYYY (Flatpickr) → Y-m-d (MySQL) ──
+        $dateFields = ['tanggal_po', 'estimasi_sampai', 'tanggal_jatuh_tempo'];
+        foreach ($dateFields as $field) {
+            if ($request->filled($field)) {
+                try {
+                    $request->merge([
+                        $field => Carbon::createFromFormat('d/m/Y', $request->$field)->format('Y-m-d'),
+                    ]);
+                } catch (\Exception $e) {
+                    // Jika sudah format Y-m-d (fallback), biarkan apa adanya
+                }
+            }
+        }
+
         $request->validate([
             'nomor_po'             => ['required', 'string', 'max:255', 'unique:purchase_orders,nomor_po'],
             'no_invoice'           => ['nullable', 'string', 'max:255'],
@@ -311,7 +326,10 @@ class PurchaseOrderController extends Controller
                 ])
                   ->setPaper([0, 0, 612, 396]);
 
-        return $pdf->stream("Bukti_PO_{$purchaseOrder->nomor_po}.pdf");
+        // Sanitasi karakter "/" agar nama file valid
+        $safePoNumber = str_replace('/', '_', $purchaseOrder->nomor_po);
+
+        return $pdf->stream("Kontra_Bon_{$safePoNumber}.pdf");
     }
 
     /**
@@ -321,9 +339,12 @@ class PurchaseOrderController extends Controller
     {
         $purchaseOrder->load(['vendor', 'user', 'details.item.uom']);
 
+        // Sanitasi karakter "/" agar nama file valid di semua OS
+        $safePoNumber = str_replace('/', '_', $purchaseOrder->nomor_po);
+
         return Excel::download(
             new PurchaseOrderPrintExport($purchaseOrder),
-            'Form_PO_' . $purchaseOrder->nomor_po . '.xlsx'
+            'Kontra_Bon_' . $safePoNumber . '.xlsx'
         );
     }
 
