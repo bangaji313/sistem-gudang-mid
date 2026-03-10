@@ -122,6 +122,24 @@
                     @error('no_invoice') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
+                {{-- Tgl Invoice --}}
+                <div>
+                    <label for="tgl_invoice" class="block text-sm font-medium text-gray-700 mb-1.5">Tgl Invoice</label>
+                    <input type="text" id="tgl_invoice" name="tgl_invoice" value="{{ old('tgl_invoice') }}" readonly
+                           placeholder="dd/mm/yyyy"
+                           class="flatpickr-date block w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+                    @error('tgl_invoice') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                {{-- Tgl Diterima --}}
+                <div>
+                    <label for="tgl_diterima" class="block text-sm font-medium text-gray-700 mb-1.5">Tgl Diterima</label>
+                    <input type="text" id="tgl_diterima" name="tgl_diterima" value="{{ old('tgl_diterima') }}" readonly
+                           placeholder="dd/mm/yyyy"
+                           class="flatpickr-date block w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+                    @error('tgl_diterima') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
                 {{-- Tanggal PO --}}
                 <div>
                     <label for="tanggal_po" class="block text-sm font-medium text-gray-700 mb-1.5">Tanggal PO <span class="text-red-500">*</span></label>

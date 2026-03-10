@@ -62,7 +62,7 @@ class PurchaseOrderController extends Controller
     public function store(Request $request): RedirectResponse
     {
         // ── Konversi tanggal DD/MM/YYYY (Flatpickr) → Y-m-d (MySQL) ──
-        $dateFields = ['tanggal_po', 'estimasi_sampai', 'tanggal_jatuh_tempo'];
+        $dateFields = ['tanggal_po', 'estimasi_sampai', 'tanggal_jatuh_tempo', 'tgl_invoice', 'tgl_diterima'];
         foreach ($dateFields as $field) {
             if ($request->filled($field)) {
                 try {
@@ -78,6 +78,8 @@ class PurchaseOrderController extends Controller
         $request->validate([
             'nomor_po'             => ['required', 'string', 'max:255', 'unique:purchase_orders,nomor_po'],
             'no_invoice'           => ['nullable', 'string', 'max:255'],
+            'tgl_invoice'          => ['nullable', 'date'],
+            'tgl_diterima'         => ['nullable', 'date'],
             'nama_vendor'          => ['required', 'string', 'max:255'],
             'tanggal_po'           => ['required', 'date'],
             'tipe_po'              => ['required', 'in:Ready Stock,Pre-Order'],
@@ -147,6 +149,8 @@ class PurchaseOrderController extends Controller
             $po = PurchaseOrder::create([
                 'nomor_po'            => $nomorPo,
                 'no_invoice'          => $request->no_invoice,
+                'tgl_invoice'         => $request->tgl_invoice,
+                'tgl_diterima'        => $request->tgl_diterima,
                 'vendor_id'           => $vendor->id,
                 'tanggal_po'          => $request->tanggal_po,
                 'tipe_po'             => $request->tipe_po,
@@ -301,6 +305,44 @@ class PurchaseOrderController extends Controller
         ]);
 
         return back()->with('success', "PO [{$purchaseOrder->nomor_po}] berhasil dibatalkan. Status pembayaran diubah ke Void / Refund.");
+    }
+
+    /**
+     * Quick Edit — update 5 field tanggal dari modal di halaman Detail PO.
+     */
+    public function updateDates(Request $request, PurchaseOrder $purchaseOrder): RedirectResponse
+    {
+        // Konversi tanggal DD/MM/YYYY (Flatpickr) → Y-m-d (MySQL)
+        $dateFields = ['tanggal_po', 'estimasi_sampai', 'tgl_invoice', 'tgl_diterima', 'tanggal_jatuh_tempo'];
+        foreach ($dateFields as $field) {
+            if ($request->filled($field)) {
+                try {
+                    $request->merge([
+                        $field => Carbon::createFromFormat('d/m/Y', $request->$field)->format('Y-m-d'),
+                    ]);
+                } catch (\Exception $e) {
+                    // fallback jika sudah format Y-m-d
+                }
+            }
+        }
+
+        $request->validate([
+            'tanggal_po'          => ['required', 'date'],
+            'estimasi_sampai'     => ['nullable', 'date'],
+            'tgl_invoice'         => ['nullable', 'date'],
+            'tgl_diterima'        => ['nullable', 'date'],
+            'tanggal_jatuh_tempo' => ['nullable', 'date'],
+        ]);
+
+        $purchaseOrder->update([
+            'tanggal_po'          => $request->tanggal_po,
+            'estimasi_sampai'     => $request->estimasi_sampai,
+            'tgl_invoice'         => $request->tgl_invoice,
+            'tgl_diterima'        => $request->tgl_diterima,
+            'tanggal_jatuh_tempo' => $request->tanggal_jatuh_tempo,
+        ]);
+
+        return back()->with('success', "Tanggal PO [{$purchaseOrder->nomor_po}] berhasil diperbarui.");
     }
 
     /**

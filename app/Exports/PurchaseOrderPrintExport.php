@@ -171,29 +171,48 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings, ShouldAutoSi
                 // ─────────────────────────────────────────────
                 $dataRow = $headerRow + 1;
 
+                // A: No
                 $sheet->setCellValue("A{$dataRow}", 1);
                 $sheet->getStyle("A{$dataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
+                // B: Tgl PO
                 $sheet->setCellValue("B{$dataRow}", Carbon::parse($po->tanggal_po)->format('d/m/Y'));
                 $sheet->getStyle("B{$dataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // C: Tgl Delivery (kosong)
-                $sheet->setCellValue("C{$dataRow}", '');
+                // C: Tgl Delivery — hanya tampil jika Pre-Order & estimasi_sampai terisi
+                $tglDelivery = ($po->tipe_po === 'Pre-Order' && $po->estimasi_sampai)
+                    ? Carbon::parse($po->estimasi_sampai)->format('d/m/Y')
+                    : '-';
+                $sheet->setCellValue("C{$dataRow}", $tglDelivery);
+                $sheet->getStyle("C{$dataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                $sheet->setCellValue("D{$dataRow}", $po->no_invoice ?? '');
+                // D: No Invoice
+                $sheet->setCellValue("D{$dataRow}", $po->no_invoice ?? '-');
                 $sheet->getStyle("D{$dataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // E: Tgl Invoice (kosong)
-                $sheet->setCellValue("E{$dataRow}", '');
+                // E: Tgl Invoice
+                $tglInvoice = $po->tgl_invoice
+                    ? Carbon::parse($po->tgl_invoice)->format('d/m/Y')
+                    : '-';
+                $sheet->setCellValue("E{$dataRow}", $tglInvoice);
+                $sheet->getStyle("E{$dataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // F: Tgl Diterima (kosong)
-                $sheet->setCellValue("F{$dataRow}", '');
+                // F: Tgl Diterima
+                $tglDiterima = $po->tgl_diterima
+                    ? Carbon::parse($po->tgl_diterima)->format('d/m/Y')
+                    : '-';
+                $sheet->setCellValue("F{$dataRow}", $tglDiterima);
+                $sheet->getStyle("F{$dataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                $sheet->setCellValue("G{$dataRow}", $po->tanggal_jatuh_tempo
-                    ? Carbon::parse($po->tanggal_jatuh_tempo)->format('d/m/Y')
-                    : '');
+                // G: Tgl Tempo — Lunas = "-", DP/Tempo = tanggal_jatuh_tempo
+                $tglTempo = '-';
+                if ($po->status_pembayaran !== 'Lunas' && $po->tanggal_jatuh_tempo) {
+                    $tglTempo = Carbon::parse($po->tanggal_jatuh_tempo)->format('d/m/Y');
+                }
+                $sheet->setCellValue("G{$dataRow}", $tglTempo);
                 $sheet->getStyle("G{$dataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
+                // H: Total Harga (Grand Total, format Rupiah)
                 $sheet->setCellValue("H{$dataRow}", $po->grand_total);
                 $sheet->getStyle("H{$dataRow}")->getNumberFormat()
                     ->setFormatCode('#,##0');

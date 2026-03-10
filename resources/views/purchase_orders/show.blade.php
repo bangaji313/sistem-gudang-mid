@@ -31,6 +31,16 @@
                     Dot Matrix
                 </a>
 
+                {{-- Tombol Edit Tanggal --}}
+                @if (in_array(auth()->user()->role, ['purchase', 'super_admin']))
+                <button type="button" onclick="document.getElementById('modalEditTanggal').classList.remove('hidden')"
+                        class="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium px-3.5 py-1.5 rounded-lg transition"
+                        title="Quick Edit Tanggal PO">
+                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+                    Edit Tanggal
+                </button>
+                @endif
+
                 {{-- Badge Pembayaran --}}
                 @php
                     $badgeClasses = match($purchaseOrder->status_pembayaran) {
@@ -97,6 +107,18 @@
                     <div>
                         <span class="text-xs text-gray-400">No. Invoice</span>
                         <p class="font-semibold text-gray-900">{{ $purchaseOrder->no_invoice }}</p>
+                    </div>
+                @endif
+                @if ($purchaseOrder->tgl_invoice)
+                    <div>
+                        <span class="text-xs text-gray-400">Tgl Invoice</span>
+                        <p class="font-semibold text-gray-900">{{ $purchaseOrder->tgl_invoice->format('d M Y') }}</p>
+                    </div>
+                @endif
+                @if ($purchaseOrder->tgl_diterima)
+                    <div>
+                        <span class="text-xs text-gray-400">Tgl Diterima</span>
+                        <p class="font-semibold text-gray-900">{{ $purchaseOrder->tgl_diterima->format('d M Y') }}</p>
                     </div>
                 @endif
                 <div>
@@ -284,4 +306,113 @@
             @endif
         </div>
     </div>
+    {{-- ════════════════════════════════════════════════════════════ --}}
+    {{-- MODAL: Quick Edit Tanggal                                    --}}
+    {{-- ════════════════════════════════════════════════════════════ --}}
+    @if (in_array(auth()->user()->role, ['purchase', 'super_admin']))
+    {{-- Flatpickr CDN --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <div id="modalEditTanggal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            {{-- Modal Header --}}
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-amber-50">
+                <h3 class="text-lg font-bold text-gray-900">📅 Quick Edit Tanggal</h3>
+                <button type="button" onclick="document.getElementById('modalEditTanggal').classList.add('hidden')"
+                        class="text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+
+            {{-- Modal Body --}}
+            <form id="formEditTanggal" method="POST" action="{{ route('purchase-orders.update-dates', $purchaseOrder) }}" class="px-6 py-5 space-y-4">
+                @csrf
+                @method('PUT')
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {{-- Tanggal PO --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal PO <span class="text-red-500">*</span></label>
+                        <input type="text" name="tanggal_po" readonly
+                               value="{{ $purchaseOrder->tanggal_po ? $purchaseOrder->tanggal_po->format('d/m/Y') : '' }}"
+                               class="modal-datepicker block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" required />
+                    </div>
+
+                    {{-- Estimasi Sampai --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Estimasi Sampai</label>
+                        <input type="text" name="estimasi_sampai" readonly
+                               value="{{ $purchaseOrder->estimasi_sampai ? $purchaseOrder->estimasi_sampai->format('d/m/Y') : '' }}"
+                               class="modal-datepicker block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
+                    </div>
+
+                    {{-- Tgl Invoice --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tgl Invoice</label>
+                        <input type="text" name="tgl_invoice" readonly
+                               value="{{ $purchaseOrder->tgl_invoice ? $purchaseOrder->tgl_invoice->format('d/m/Y') : '' }}"
+                               class="modal-datepicker block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
+                    </div>
+
+                    {{-- Tgl Diterima --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tgl Diterima</label>
+                        <input type="text" name="tgl_diterima" readonly
+                               value="{{ $purchaseOrder->tgl_diterima ? $purchaseOrder->tgl_diterima->format('d/m/Y') : '' }}"
+                               class="modal-datepicker block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
+                    </div>
+
+                    {{-- Tanggal Jatuh Tempo --}}
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Jatuh Tempo</label>
+                        <input type="text" name="tanggal_jatuh_tempo" readonly
+                               value="{{ $purchaseOrder->tanggal_jatuh_tempo ? $purchaseOrder->tanggal_jatuh_tempo->format('d/m/Y') : '' }}"
+                               class="modal-datepicker block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
+                    </div>
+                </div>
+
+                {{-- Modal Footer --}}
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-200">
+                    <button type="button" onclick="document.getElementById('modalEditTanggal').classList.add('hidden')"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition">
+                        Batal
+                    </button>
+                    <button type="submit"
+                            class="px-5 py-2 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-lg transition shadow-sm">
+                        💾 Simpan Perubahan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Flatpickr untuk field di dalam modal
+        flatpickr(".modal-datepicker", {
+            dateFormat: "d/m/Y",
+            allowInput: true,
+        });
+
+        // SweetAlert2 konfirmasi sebelum submit
+        document.getElementById('formEditTanggal').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = this;
+            Swal.fire({
+                title: 'Simpan Perubahan Tanggal?',
+                text: 'Apakah Anda yakin ingin menyimpan perubahan tanggal ini?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#f59e0b',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Ya, Simpan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    </script>
+    @endif
 @endsection

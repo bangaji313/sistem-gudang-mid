@@ -19,6 +19,8 @@ class PurchaseOrder extends Model
     protected $fillable = [
         'nomor_po',
         'no_invoice',
+        'tgl_invoice',
+        'tgl_diterima',
         'vendor_id',
         'tanggal_po',
         'tipe_po',
@@ -45,6 +47,8 @@ class PurchaseOrder extends Model
             'tanggal_po' => 'date',
             'estimasi_sampai' => 'date',
             'tanggal_jatuh_tempo' => 'date',
+            'tgl_invoice' => 'date',
+            'tgl_diterima' => 'date',
             'total_harga' => 'decimal:2',
             'diskon' => 'decimal:2',
             'grand_total' => 'decimal:2',

@@ -90,6 +90,8 @@ Route::middleware('auth')->group(function () {
             ->name('purchase-orders.lunas');
         Route::patch('/purchase-orders/{purchase_order}/cancel', [PurchaseOrderController::class, 'markAsCanceled'])
             ->name('purchase-orders.cancel');
+        Route::put('/purchase-orders/{purchase_order}/update-dates', [PurchaseOrderController::class, 'updateDates'])
+            ->name('purchase-orders.update-dates');
     });
 
     // ---------------------------------------------------------
