@@ -53,13 +53,14 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings
                 // ─────────────────────────────────────────────
                 $sheet->getParent()->getDefaultStyle()->getFont()
                     ->setName('Courier New')
-                    ->setSize(10);
+                    ->setSize(11);
 
                 $sheet->getPageSetup()
                     ->setOrientation(PageSetup::ORIENTATION_LANDSCAPE)
                     ->setPaperSize(PageSetup::PAPERSIZE_STATEMENT)
-                    ->setFitToWidth(1)
-                    ->setFitToHeight(1);
+                    ->setFitToWidth(0)
+                    ->setFitToHeight(0)
+                    ->setScale(100);
 
                 $sheet->getPageMargins()
                     ->setTop(0.3)
@@ -68,16 +69,16 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings
                     ->setLeft(0.3);
 
                 // ─────────────────────────────────────────────
-                // LEBAR KOLOM — presisi sesuai spesifikasi
+                // LEBAR KOLOM — diet agar total ≤ 90 (skala 100%)
                 // ─────────────────────────────────────────────
-                $sheet->getColumnDimension('A')->setWidth(5)->setAutoSize(false);   // No
-                $sheet->getColumnDimension('B')->setWidth(15)->setAutoSize(false);  // Tgl PO
-                $sheet->getColumnDimension('C')->setWidth(15)->setAutoSize(false);  // Tgl Delivery
-                $sheet->getColumnDimension('D')->setWidth(25)->setAutoSize(false);  // No Invoice
-                $sheet->getColumnDimension('E')->setWidth(15)->setAutoSize(false);  // Tgl Invoice
-                $sheet->getColumnDimension('F')->setWidth(15)->setAutoSize(false);  // Tgl Diterima
-                $sheet->getColumnDimension('G')->setWidth(20)->setAutoSize(false);  // Tgl Tempo Pembayaran
-                $sheet->getColumnDimension('H')->setWidth(20)->setAutoSize(false);  // Total Harga
+                $sheet->getColumnDimension('A')->setWidth(4)->setAutoSize(false);   // No
+                $sheet->getColumnDimension('B')->setWidth(11)->setAutoSize(false);  // Tgl PO
+                $sheet->getColumnDimension('C')->setWidth(11)->setAutoSize(false);  // Tgl Delivery
+                $sheet->getColumnDimension('D')->setWidth(16)->setAutoSize(false);  // No Invoice
+                $sheet->getColumnDimension('E')->setWidth(11)->setAutoSize(false);  // Tgl Invoice
+                $sheet->getColumnDimension('F')->setWidth(11)->setAutoSize(false);  // Tgl Diterima
+                $sheet->getColumnDimension('G')->setWidth(11)->setAutoSize(false);  // Tgl Tempo Pembayaran
+                $sheet->getColumnDimension('H')->setWidth(14)->setAutoSize(false);  // Total Harga
 
                 // ─────────────────────────────────────────────
                 // KOP SURAT — Baris 1-3 (rata kanan kolom D-H)
