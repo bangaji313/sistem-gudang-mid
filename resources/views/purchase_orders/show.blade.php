@@ -398,7 +398,24 @@
                                                 <span class="text-gray-400">{{ number_format($rev->old_price, 0, ',', '.') }} (tetap)</span>
                                             @endif
                                         </td>
-                                        <td class="px-3 py-2.5 text-gray-600 text-xs max-w-[150px] truncate" title="{{ $rev->keterangan }}">{{ $rev->keterangan ?? '-' }}</td>
+                                        <td class="px-3 py-2.5 text-gray-600 text-xs max-w-[200px]">
+                                            @if ($rev->keterangan)
+                                                @if (Str::length($rev->keterangan) > 50)
+                                                    <div x-data="{ expanded: false }">
+                                                        <p x-show="!expanded" class="line-clamp-2">{{ $rev->keterangan }}</p>
+                                                        <p x-show="expanded" x-cloak>{{ $rev->keterangan }}</p>
+                                                        <button type="button" @click="expanded = !expanded"
+                                                                class="mt-0.5 text-blue-600 hover:text-blue-800 text-[10px] font-medium focus:outline-none">
+                                                            <span x-text="expanded ? '↑ Lebih Sedikit' : '↓ Baca Selengkapnya'"></span>
+                                                        </button>
+                                                    </div>
+                                                @else
+                                                    {{ $rev->keterangan }}
+                                                @endif
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
                                         <td class="px-3 py-2.5 text-gray-600 text-xs">{{ $rev->revisedBy->name ?? '-' }}</td>
                                     </tr>
                                 @endforeach
