@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\Terbilang;
 use App\Models\Item;
 use App\Models\PurchaseOrder;
 use App\Models\Uom;
 use App\Models\Vendor;
+use App\Exports\PurchaseOrderPrintExport;
+use App\Exports\PurchaseOrdersExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PurchaseOrderController extends Controller
 {
@@ -57,6 +61,8 @@ class PurchaseOrderController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
+            'nomor_po'             => ['required', 'string', 'max:255', 'unique:purchase_orders,nomor_po'],
+            'no_invoice'           => ['nullable', 'string', 'max:255'],
             'nama_vendor'          => ['required', 'string', 'max:255'],
             'tanggal_po'           => ['required', 'date'],
             'tipe_po'              => ['required', 'in:Ready Stock,Pre-Order'],
@@ -73,23 +79,14 @@ class PurchaseOrderController extends Controller
             'items.*.nama_uom'     => ['required', 'string', 'max:255'],
             'items.*.merk'         => ['nullable', 'string', 'max:255'],
         ], [
-            'tanggal_jatuh_tempo.required_if'    => 'Tanggal jatuh tempo wajib diisi jika status pembayaran DP atau Tempo.',
+            'nomor_po.required'                   => 'Nomor PO wajib diisi.',
+            'nomor_po.unique'                     => 'Nomor PO sudah digunakan, silakan gunakan nomor lain.',
+            'tanggal_jatuh_tempo.required_if'     => 'Tanggal jatuh tempo wajib diisi jika status pembayaran DP atau Tempo.',
             'tanggal_jatuh_tempo.after_or_equal'  => 'Tanggal jatuh tempo tidak boleh sebelum tanggal PO.',
             'estimasi_sampai.after_or_equal'      => 'Estimasi sampai tidak boleh sebelum tanggal PO.',
         ]);
 
-        // Auto-generate nomor_po: PO-20260305-001
-        $today  = now()->format('Ymd');
-        $prefix = "PO-{$today}-";
-        $lastPo = PurchaseOrder::where('nomor_po', 'like', "{$prefix}%")
-            ->orderBy('nomor_po', 'desc')
-            ->first();
-
-        $nextSeq = $lastPo
-            ? ((int) substr($lastPo->nomor_po, -3)) + 1
-            : 1;
-
-        $nomorPo = $prefix . str_pad($nextSeq, 3, '0', STR_PAD_LEFT);
+        $nomorPo = $request->nomor_po;
 
         // Calculate totals
         $totalHarga = 0;
@@ -134,6 +131,7 @@ class PurchaseOrderController extends Controller
 
             $po = PurchaseOrder::create([
                 'nomor_po'            => $nomorPo,
+                'no_invoice'          => $request->no_invoice,
                 'vendor_id'           => $vendor->id,
                 'tanggal_po'          => $request->tanggal_po,
                 'tipe_po'             => $request->tipe_po,
@@ -288,6 +286,45 @@ class PurchaseOrderController extends Controller
         ]);
 
         return back()->with('success', "PO [{$purchaseOrder->nomor_po}] berhasil dibatalkan. Status pembayaran diubah ke Void / Refund.");
+    }
+
+    /**
+     * Export data purchase order ke Excel (dengan kop surat & logo).
+     */
+    public function exportExcel()
+    {
+        return Excel::download(new PurchaseOrdersExport, 'Data_PO_PT_MID.xlsx');
+    }
+
+    /**
+     * Cetak Continuous Form (Bukti PO / Kontra Bon) — Half-Letter Landscape 21.59cm × 13.97cm.
+     */
+    public function printContinuousForm(PurchaseOrder $purchaseOrder)
+    {
+        $purchaseOrder->load(['vendor', 'user', 'details.item.uom']);
+
+        $terbilang = Terbilang::make($purchaseOrder->grand_total);
+
+        $pdf = Pdf::loadView('purchase_orders.print_continuous', [
+                    'po'        => $purchaseOrder,
+                    'terbilang' => $terbilang,
+                ])
+                  ->setPaper([0, 0, 612, 396]);
+
+        return $pdf->stream("Bukti_PO_{$purchaseOrder->nomor_po}.pdf");
+    }
+
+    /**
+     * Print Kontra Bon Dot Matrix — download file Excel (.xlsx) untuk 1 PO spesifik.
+     */
+    public function printExcelMatrix(PurchaseOrder $purchaseOrder)
+    {
+        $purchaseOrder->load(['vendor', 'user', 'details.item.uom']);
+
+        return Excel::download(
+            new PurchaseOrderPrintExport($purchaseOrder),
+            'Form_PO_' . $purchaseOrder->nomor_po . '.xlsx'
+        );
     }
 
     /**

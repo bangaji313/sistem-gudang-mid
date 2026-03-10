@@ -80,6 +80,9 @@ Route::middleware('auth')->group(function () {
     // ---------------------------------------------------------
     Route::middleware('role:purchase,super_admin')->group(function () {
         Route::get('/purchase-orders/export-pdf', [PurchaseOrderController::class, 'exportPdf'])->name('purchase-orders.export-pdf');
+        Route::get('/purchase-orders/export-excel', [PurchaseOrderController::class, 'exportExcel'])->name('purchase-orders.export-excel');
+        Route::get('/purchase-orders/{purchase_order}/print-continuous', [PurchaseOrderController::class, 'printContinuousForm'])->name('purchase-orders.print-continuous');
+        Route::get('/purchase-orders/{purchase_order}/print-excel', [PurchaseOrderController::class, 'printExcelMatrix'])->name('purchase-orders.print-excel');
         Route::resource('purchase-orders', PurchaseOrderController::class)->only(['index', 'create', 'store', 'show']);
         Route::patch('/purchase-orders/{purchase_order}/arrived', [PurchaseOrderController::class, 'markAsArrived'])
             ->name('purchase-orders.arrived');

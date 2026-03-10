@@ -18,6 +18,7 @@ class PurchaseOrder extends Model
      */
     protected $fillable = [
         'nomor_po',
+        'no_invoice',
         'vendor_id',
         'tanggal_po',
         'tipe_po',

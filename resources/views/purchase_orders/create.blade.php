@@ -58,7 +58,7 @@
             Kembali ke Daftar PO
         </a>
         <h1 class="text-2xl font-bold text-gray-900">Buat Purchase Order Baru</h1>
-        <p class="text-sm text-gray-500 mt-1">Nomor PO akan di-generate otomatis</p>
+        <p class="text-sm text-gray-500 mt-1">Isi nomor PO secara manual, contoh: 012/KB/MID/II/2026</p>
     </div>
 
     <form method="POST" action="{{ route('purchase-orders.store') }}" id="poForm" class="max-w-5xl space-y-6">
@@ -98,6 +98,25 @@
                         @error('alamat_vendor') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <p class="md:col-span-2 text-xs text-amber-600">⚠ Vendor baru terdeteksi — silakan lengkapi kontak & alamat.</p>
+                </div>
+
+                {{-- Nomor PO (Manual) --}}
+                <div>
+                    <label for="nomor_po" class="block text-sm font-medium text-gray-700 mb-1.5">Nomor PO <span class="text-red-500">*</span></label>
+                    <input type="text" id="nomor_po" name="nomor_po" value="{{ old('nomor_po') }}" required
+                           placeholder="Contoh format: 012/KB/MID/II/2026"
+                           class="block w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+                    <p class="mt-1 text-xs text-gray-400">Isi nomor PO secara manual. Harus unik (tidak boleh sama dengan PO lain).</p>
+                    @error('nomor_po') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                {{-- No. Invoice --}}
+                <div>
+                    <label for="no_invoice" class="block text-sm font-medium text-gray-700 mb-1.5">No. Invoice</label>
+                    <input type="text" id="no_invoice" name="no_invoice" value="{{ old('no_invoice') }}"
+                           placeholder="Nomor invoice dari vendor (opsional)"
+                           class="block w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" />
+                    @error('no_invoice') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 {{-- Tanggal PO --}}

@@ -1,4 +1,4 @@
-<p align="center">
+s<p align="center">
   <img src="public/images/logo.png" alt="Logo PT Multyartha Indo Daya" width="120">
 </p>
 
