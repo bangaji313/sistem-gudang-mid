@@ -311,7 +311,8 @@ class PurchaseOrderPrintExport implements WithEvents, WithDrawings
 
                 $sheet->mergeCells("A{$currentRow}:H{$currentRow}");
                 $sheet->setCellValue("A{$currentRow}", 'Terbilang: ' . $terbilang . ' Rupiah');
-                $sheet->getStyle("A{$currentRow}")->getFont()->setItalic(true)->setSize(9);
+                $sheet->getStyle("A{$currentRow}")->getFont()->setItalic(true)->setSize(11);
+                $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getAlignment()->setWrapText(true);
                 $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getBorders()->getTop()
                     ->setBorderStyle(Border::BORDER_DASHED);
                 $sheet->getStyle("A{$currentRow}:H{$currentRow}")->getBorders()->getBottom()
